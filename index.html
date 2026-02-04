@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乡村运营数据大屏展示系统</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>乡村运营行政村信息大屏展示系统</h1>
+            <div class="header-controls">
+                <button id="refreshBtn" class="control-btn">刷新数据</button>
+                <span id="lastUpdated">最后更新: --</span>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            <!-- 数据概览区域 -->
+            <div class="overview-section">
+                <div class="overview-card">
+                    <h3>运营村庄总数</h3>
+                    <div class="overview-value" id="totalVillages">0</div>
+                </div>
+                <div class="overview-card">
+                    <h3>运营类型分布</h3>
+                    <div class="overview-value" id="operationTypes">--</div>
+                </div>
+                <div class="overview-card">
+                    <h3>覆盖区域数量</h3>
+                    <div class="overview-value" id="regionCount">0</div>
+                </div>
+                <div class="overview-card">
+                    <h3>数据更新率</h3>
+                    <div class="overview-value" id="updateRate">--</div>
+                </div>
+            </div>
+            
+            <!-- 图表区域 -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3>运营类型分布</h3>
+                    <div id="operationTypeChart" style="height: 400px;"></div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>各区域运营村庄数量</h3>
+                    <div id="regionChart" style="height: 400px;"></div>
+                </div>
+            </div>
+            
+            <div class="charts-section">
+                <div class="chart-container full-width">
+                    <h3>村庄详细信息</h3>
+                    <div class="table-container">
+                        <table id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th>村庄名称</th>
+                                    <th>所属区域</th>
+                                    <th>运营类型</th>
+                                    <th>负责人</th>
+                                    <th>联系方式</th>
+                                    <th>运营状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- 数据将通过JavaScript动态填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // 使用静态数据替代API调用
+    async function loadData() {
+        try {
+            document.getElementById('totalVillages').textContent = '加载中...';
+            
+            // 从静态文件加载数据
+            const dataResponse = await fetch('data/data.json');
+            const data = await dataResponse.json();
+            
+            const statsResponse = await fetch('data/stats.json');
+            const stats = await statsResponse.json();
+            
+            displayData(data);
+            updateStats(stats);
+            
+            updateLastUpdatedTime();
+        } catch (error) {
+            console.error('数据加载失败:', error);
+            // 使用模拟数据作为备选
+            const mockData = generateMockData();
+            displayData(mockData);
+            
+            document.getElementById('totalVillages').textContent = mockData.length;
+            document.getElementById('regionCount').textContent = 10;
+            document.getElementById('operationTypes').textContent = '文旅融合';
+            document.getElementById('updateRate').textContent = '90%';
+        }
+    }
+    
+    // 模拟数据生成函数
+    function generateMockData() {
+        const villages = [];
+        const regions = ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '金华市', '衢州市', '台州市', '丽水市'];
+        const operationTypes = ['文旅融合', '生态农业', '电商直播', '民宿经济', '康养产业', '数字乡村'];
+        
+        for (let i = 1; i <= 50; i++) {
+            villages.push({
+                id: i,
+                村庄名称: '示范村'+i,
+                所属区域: regions[Math.floor(Math.random() * regions.length)],
+                运营类型: operationTypes[Math.floor(Math.random() * operationTypes.length)],
+                负责人: '负责人'+String.fromCharCode(65 + i % 26),
+                联系方式: '138'+Math.floor(10000000 + Math.random() * 90000000),
+                运营状态: Math.random() > 0.2 ? '运营中' : '筹备中'
+            });
+        }
+        
+        return villages;
+    }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "total_villages": 50,
+  "regions_count": 10,
+  "operation_types": {
+    "康养产业": 9,
+    "民宿经济": 11,
+    "文旅融合": 10,
+    "数字乡村": 7,
+    "电商直播": 10,
+    "生态农业": 3
+  },
+  "update_rate": "80%",
+  "top_operation_type": "民宿经济"
+}

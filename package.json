@@ -1,0 +1,26 @@
+{
+  "name": "rural-operation-dashboard",
+  "version": "1.0.0",
+  "description": "乡村运营数据大屏展示系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "python3 server.py",
+    "dev": "nodemon server.py",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dashboard",
+    "rural-operation",
+    "data-visualization",
+    "excel",
+    "opencode"
+  ],
+  "author": "OpenClaw",
+  "license": "MIT",
+  "dependencies": {
+    "flask": "^2.3.0",
+    "pandas": "^2.0.0",
+    "openpyxl": "^3.1.0"
+  },
+  "devDependencies": {}
+}
