@@ -1,12 +1,15 @@
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, send_from_directory
 import pandas as pd
 import os
 import sys
+import json
 
 app = Flask(__name__)
 
-# Excel文件路径
+# Excel文件路径和 JSON 文件路径
 EXCEL_FILE_PATH = "/Users/wubin/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/wubin010745_34d6/msg/file/2026-01/0501（汇总）乡村运营行政村信息表(已开展运营).xls"
+DATA_JSON_PATH = "data/data.json"
+STATS_JSON_PATH = "data/stats.json"
 
 def read_excel_data():
     """读取Excel文件中的数据"""
@@ -41,15 +44,61 @@ def index():
         template = f.read()
     return render_template_string(template)
 
+@app.route('/data/<path:filename>')
+def serve_data(filename):
+    """提供 data 目录下的文件"""
+    return send_from_directory('data', filename)
+
+@app.route('/script.js')
+def serve_script():
+    """提供 script.js"""
+    return send_from_directory('.', 'script.js')
+
+@app.route('/styles.css')
+def serve_styles():
+    """提供 styles.css"""
+    return send_from_directory('.', 'styles.css')
+
 @app.route('/api/data')
 def get_data():
-    """API端点，返回Excel数据"""
-    data = read_excel_data()
-    return jsonify(data)
+    """API端点，返回JSON数据"""
+    try:
+        # 优先使用 JSON 文件
+        if os.path.exists(DATA_JSON_PATH):
+            with open(DATA_JSON_PATH, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return jsonify(data)
+        else:
+            # 回退到读取 Excel
+            data = read_excel_data()
+            return jsonify(data)
+    except Exception as e:
+        print(f"读取数据时出错: {str(e)}", file=sys.stderr)
+        return jsonify([])
 
 @app.route('/api/stats')
 def get_stats():
     """API端点，返回统计数据"""
+    try:
+        # 优先使用 JSON 文件
+        if os.path.exists(STATS_JSON_PATH):
+            with open(STATS_JSON_PATH, 'r', encoding='utf-8') as f:
+                stats = json.load(f)
+            return jsonify(stats)
+        else:
+            # 回退到动态计算
+            return calculate_stats()
+    except Exception as e:
+        print(f"读取统计数据时出错: {str(e)}", file=sys.stderr)
+        return jsonify({
+            'total_villages': 0,
+            'regions_count': 0,
+            'business_types': {},
+            'update_rate': '0%'
+        })
+
+def calculate_stats():
+    """动态计算统计数据"""
     data = read_excel_data()
     
     if not data:

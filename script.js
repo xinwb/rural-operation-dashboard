@@ -1,201 +1,236 @@
-// 乡村运营数据大屏展示系统脚本
+// 乡村运营数据大屏展示系统 - 更新版
+let mapChart = null;
 let operationTypeChart = null;
 let regionChart = null;
+let businessTypeChart = null;
+let rentModeChart = null;
 
-// 从服务器加载Excel数据
+// 杭州市各区县经纬度映射
+const HANGZHOU_DISTRICT_COORDS = {
+    '西湖区': [120.1296, 30.2595],
+    '上城区': [120.1808, 30.2425],
+    '拱墅区': [120.1500, 30.3199],
+    '滨江区': [120.2108, 30.2084],
+    '萧山区': [120.2707, 30.1629],
+    '余杭区': [120.3017, 30.4212],
+    '临平区': [120.2986, 30.4210],
+    '钱塘区': [120.3489, 30.3225],
+    '富阳区': [119.9605, 30.0488],
+    '临安区': [119.7247, 30.2339],
+    '桐庐县': [119.6850, 29.7978],
+    '淳安县': [119.0421, 29.6046],
+    '建德市': [119.2816, 29.4746]
+};
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    
+    // 绑定刷新按钮
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
+});
+
+// 加载数据
 async function loadData() {
     try {
-        // 显示加载状态
+        console.log('开始加载数据...');
         document.getElementById('totalVillages').textContent = '加载中...';
         
-        // 从后端API获取数据
-        const response = await fetch('/api/data');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        // 加载真实数据
+        const dataResponse = await fetch('data/data.json');
+        const data = await dataResponse.json();
         
-        // 显示数据
-        displayData(data);
+        const statsResponse = await fetch('data/stats.json');
+        const stats = await statsResponse.json();
         
-        // 同时获取统计数据
-        const statsResponse = await fetch('/api/stats');
-        if (statsResponse.ok) {
-            const stats = await statsResponse.json();
-            updateStats(stats);
-        }
-        
-        // 更新最后更新时间
-        updateLastUpdatedTime();
-        
-        console.log('数据加载完成');
-    } catch (error) {
-        console.error('数据加载失败:', error);
-        console.log('使用模拟数据作为备选方案');
-        
-        // 如果API调用失败，使用模拟数据
-        const mockData = generateMockData();
-        displayData(mockData);
+        console.log(`成功加载 ${data.length} 条数据`);
         
         // 更新概览数据
-        document.getElementById('totalVillages').textContent = mockData.length;
-        document.getElementById('regionCount').textContent = 10;
-        document.getElementById('operationTypes').textContent = '文旅融合';
-        document.getElementById('updateRate').textContent = '90%';
-    }
-}
-
-// 模拟生成数据（在实际应用中，这将来自真实的Excel文件）
-function generateMockData() {
-    const villages = [];
-    const regions = ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '金华市', '衢州市', '台州市', '丽水市'];
-    const operationTypes = ['文旅融合', '生态农业', '电商直播', '民宿经济', '康养产业', '数字乡村'];
-    
-    for (let i = 1; i <= 50; i++) {
-        villages.push({
-            id: i,
-            name: `示范村${i}`,
-            region: regions[Math.floor(Math.random() * regions.length)],
-            operationType: operationTypes[Math.floor(Math.random() * operationTypes.length)],
-            manager: `负责人${String.fromCharCode(65 + i % 26)}`,
-            contact: `138${Math.floor(10000000 + Math.random() * 90000000)}`,
-            status: Math.random() > 0.2 ? '运营中' : '筹备中'
-        });
-    }
-    
-    return villages;
-}
-
-// 更新统计数据
-function updateStats(stats) {
-    document.getElementById('totalVillages').textContent = stats.total_villages || 0;
-    document.getElementById('regionCount').textContent = stats.regions_count || 0;
-    document.getElementById('operationTypes').textContent = stats.top_operation_type || '--';
-    document.getElementById('updateRate').textContent = stats.update_rate || '--';
-}
-
-// 显示数据
-function displayData(data) {
-    // 如果有真实数据，优先使用真实数据更新表格
-    if (data && data.length > 0) {
+        updateOverview(stats);
+        
+        // 更新地图
+        await updateMap(data, stats);
+        
+        // 更新图表
+        updateCharts(data, stats);
+        
         // 更新表格
         updateTable(data);
         
-        // 为真实数据计算图表数据
-        // 尝试找到适当的列名
-        const operationColumn = findColumnByKeywords(data[0], ['运营', '类型', '模式']);
-        const regionColumn = findColumnByKeywords(data[0], ['区域', '地区', '区']);
-        const statusColumn = findColumnByKeywords(data[0], ['状态', '运营状态']);
+        // 更新时间
+        updateLastUpdatedTime();
         
-        if (operationColumn && regionColumn) {
-            // 计算运营类型分布
-            const typeCounts = {};
-            data.forEach(row => {
-                const opType = row[operationColumn];
-                if (opType) {
-                    const opStr = String(opType);
-                    typeCounts[opStr] = (typeCounts[opStr] || 0) + 1;
-                }
-            });
-            
-            // 计算区域分布
-            const regionCounts = {};
-            data.forEach(row => {
-                const region = row[regionColumn];
-                if (region) {
-                    const regionStr = String(region);
-                    regionCounts[regionStr] = (regionCounts[regionStr] || 0) + 1;
-                }
-            });
-            
-            // 更新图表
-            updateCharts(data, typeCounts, regionCounts);
-        } else {
-            // 如果没找到合适的列，使用模拟数据
-            const mockData = generateMockData();
-            const typeCounts = {};
-            mockData.forEach(village => {
-                typeCounts[village.operationType] = (typeCounts[village.operationType] || 0) + 1;
-            });
-            
-            updateCharts(mockData, typeCounts);
-        }
-    } else {
-        // 如果没有真实数据，使用模拟数据
-        const mockData = generateMockData();
-        displayData(mockData);
+    } catch (error) {
+        console.error('数据加载失败:', error);
+        document.getElementById('totalVillages').textContent = '加载失败';
     }
 }
 
-// 辅助函数：根据关键词查找列名
-function findColumnByKeywords(firstRow, keywords) {
-    if (!firstRow) return null;
+// 更新概览数据
+function updateOverview(stats) {
+    document.getElementById('totalVillages').textContent = stats.total_villages || 0;
+    document.getElementById('regionCount').textContent = stats.regions_count || 0;
+    document.getElementById('operationTypes').textContent = stats.top_business_type || '--';
     
-    for (const key of Object.keys(firstRow)) {
-        for (const keyword of keywords) {
-            if (key.includes(keyword)) {
-                return key;
-            }
-        }
-    }
-    
-    // 如果没有精确匹配，返回第一个可能的列
-    for (const key of Object.keys(firstRow)) {
-        for (const keyword of keywords) {
-            if (key.toLowerCase().includes(keyword.toLowerCase())) {
-                return key;
-            }
-        }
-    }
-    
-    return null;
+    // 计算数据更新率 (假设已更新/总数)
+    const updateRate = stats.total_villages > 0 ? '100%' : '0%';
+    document.getElementById('updateRate').textContent = updateRate;
 }
 
-// 更新表格
-function updateTable(data) {
-    const tableBody = document.getElementById('tableBody');
-    tableBody.innerHTML = '';
-    
-    data.forEach((village, index) => {
-        const row = document.createElement('tr');
+// 更新地图
+async function updateMap(data, stats) {
+    try {
+        // 加载杭州地图数据
+        const mapResponse = await fetch('data/hangzhou.json');
+        const hangzhouGeoJson = await mapResponse.json();
         
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${village.name}</td>
-            <td>${village.region}</td>
-            <td>${village.operationType}</td>
-            <td>${village.manager}</td>
-            <td>${village.contact}</td>
-            <td><span class="status-${village.status === '运营中' ? 'active' : 'pending'}">${village.status}</span></td>
-        `;
+        // 注册地图
+        echarts.registerMap('hangzhou', hangzhouGeoJson);
         
-        tableBody.appendChild(row);
-    });
+        // 初始化地图
+        const mapDom = document.getElementById('mapChart');
+        if (mapChart) {
+            mapChart.dispose();
+        }
+        mapChart = echarts.init(mapDom);
+        
+        // 处理地图数据
+        const mapData = [];
+        const scatterData = [];
+        
+        // 统计各区域数量
+        Object.entries(stats.regions).forEach(([region, count]) => {
+            mapData.push({
+                name: region,
+                value: count
+            });
+            
+            // 添加散点数据
+            const coords = HANGZHOU_DISTRICT_COORDS[region];
+            if (coords) {
+                scatterData.push({
+                    name: region,
+                    value: [...coords, count]
+                });
+            }
+        });
+        
+        const option = {
+            title: {
+                text: '杭州市乡村运营分布',
+                left: 'center',
+                top: 20,
+                textStyle: {
+                    color: '#fff',
+                    fontSize: 20
+                }
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function(params) {
+                    if (params.componentSubType === 'scatter') {
+                        return `${params.name}<br/>运营村庄: ${params.value[2]} 个`;
+                    } else {
+                        return `${params.name}<br/>运营村庄: ${params.value || 0} 个`;
+                    }
+                }
+            },
+            visualMap: {
+                min: 0,
+                max: Math.max(...mapData.map(d => d.value)),
+                left: 'left',
+                top: 'bottom',
+                text: ['高', '低'],
+                textStyle: {
+                    color: '#fff'
+                },
+                inRange: {
+                    color: ['#50a3ba', '#eac736', '#d94e5d']
+                },
+                calculable: true
+            },
+            geo: {
+                map: 'hangzhou',
+                roam: true,
+                label: {
+                    show: true,
+                    color: '#fff'
+                },
+                itemStyle: {
+                    areaColor: '#2e5266',
+                    borderColor: '#4b7a8e'
+                },
+                emphasis: {
+                    label: {
+                        color: '#fff'
+                    },
+                    itemStyle: {
+                        areaColor: '#3e6f87'
+                    }
+                }
+            },
+            series: [
+                {
+                    name: '运营村庄数',
+                    type: 'map',
+                    geoIndex: 0,
+                    data: mapData
+                },
+                {
+                    name: '散点',
+                    type: 'scatter',
+                    coordinateSystem: 'geo',
+                    data: scatterData,
+                    symbolSize: function(val) {
+                        return Math.max(val[2] * 0.8, 10);
+                    },
+                    label: {
+                        formatter: '{b}',
+                        position: 'right',
+                        show: false
+                    },
+                    itemStyle: {
+                        color: '#ffa500'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            color: '#fff'
+                        }
+                    }
+                }
+            ]
+        };
+        
+        mapChart.setOption(option);
+        
+    } catch (error) {
+        console.error('地图加载失败:', error);
+    }
 }
 
 // 更新图表
-function updateCharts(data, typeCounts, regionCounts = null) {
-    // 销毁现有图表实例
+function updateCharts(data, stats) {
+    // 1. 运营主体性质分布
     if (operationTypeChart) {
         operationTypeChart.dispose();
     }
-    if (regionChart) {
-        regionChart.dispose();
-    }
+    operationTypeChart = echarts.init(document.getElementById('operationTypeChart'));
     
-    // 初始化运营类型分布图表
-    const operationTypeChartDom = document.getElementById('operationTypeChart');
-    operationTypeChart = echarts.init(operationTypeChartDom);
+    const subjectData = Object.entries(stats.subject_types || {}).map(([name, value]) => ({
+        name: name || '其他',
+        value
+    }));
     
-    const operationTypeOption = {
+    operationTypeChart.setOption({
         title: {
-            text: '运营类型分布',
+            text: '运营主体性质',
             left: 'center',
             textStyle: { color: '#fff' }
         },
         tooltip: {
             trigger: 'item',
-            formatter: '{a} <br/>{b}: {c} ({d}%)'
+            formatter: '{b}: {c} ({d}%)'
         },
         legend: {
             orient: 'vertical',
@@ -203,166 +238,224 @@ function updateCharts(data, typeCounts, regionCounts = null) {
             textStyle: { color: '#fff' }
         },
         series: [{
-            name: '运营类型',
             type: 'pie',
-            radius: '50%',
-            data: Object.entries(typeCounts).map(([name, value]) => ({
-                value: value,
-                name: name
-            })),
+            radius: '60%',
+            data: subjectData,
             emphasis: {
                 itemStyle: {
                     shadowBlur: 10,
                     shadowOffsetX: 0,
                     shadowColor: 'rgba(0, 0, 0, 0.5)'
                 }
-            },
-            label: {
-                color: '#fff'
-            },
-            labelLine: {
-                lineStyle: {
-                    color: 'rgba(255, 255, 255, 0.3)'
-                }
             }
-        }],
-        color: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c']
-    };
+        }]
+    });
     
-    operationTypeChart.setOption(operationTypeOption);
-    
-    // 初始化区域分布图表
-    const regionChartDom = document.getElementById('regionChart');
-    regionChart = echarts.init(regionChartDom);
-    
-    // 如果没有传入regionCounts，尝试从数据中计算
-    if (!regionCounts) {
-        regionCounts = {};
-        // 尝试找到区域列
-        if (data && data.length > 0 && typeof data[0] === 'object') {
-            const regionColumn = findColumnByKeywords(data[0], ['区域', '地区', '区']);
-            if (regionColumn) {
-                data.forEach(row => {
-                    const region = row[regionColumn];
-                    if (region) {
-                        const regionStr = String(region);
-                        regionCounts[regionStr] = (regionCounts[regionStr] || 0) + 1;
-                    }
-                });
-            } else {
-                // 如果没找到区域列，使用模拟数据
-                const mockRegions = ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市'];
-                mockRegions.forEach(region => {
-                    regionCounts[region] = Math.floor(Math.random() * 20) + 5;
-                });
-            }
-        }
+    // 2. 区域分布柱状图
+    if (regionChart) {
+        regionChart.dispose();
     }
+    regionChart = echarts.init(document.getElementById('regionChart'));
     
-    const regionOption = {
+    const regionData = Object.entries(stats.regions || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 13);
+    
+    regionChart.setOption({
         title: {
-            text: '各区域运营村庄数量',
+            text: '区域分布',
             left: 'center',
             textStyle: { color: '#fff' }
         },
         tooltip: {
             trigger: 'axis',
-            axisPointer: {
-                type: 'shadow'
-            }
+            axisPointer: { type: 'shadow' }
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
         },
         xAxis: {
             type: 'category',
-            data: Object.keys(regionCounts),
-            axisLabel: { color: '#fff' },
-            axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.3)' } }
+            data: regionData.map(d => d[0]),
+            axisLabel: {
+                color: '#fff',
+                rotate: 45
+            }
         },
         yAxis: {
             type: 'value',
-            axisLabel: { color: '#fff' },
-            axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.3)' } },
-            splitLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.1)' } }
+            axisLabel: { color: '#fff' }
         },
         series: [{
-            name: '村庄数量',
             type: 'bar',
-            data: Object.values(regionCounts),
+            data: regionData.map(d => d[1]),
             itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
                     { offset: 0, color: '#83bff6' },
                     { offset: 0.5, color: '#188df0' },
                     { offset: 1, color: '#188df0' }
                 ])
-            },
-            emphasis: {
-                itemStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        { offset: 0, color: '#2378f7' },
-                        { offset: 0.7, color: '#2378f7' },
-                        { offset: 1, color: '#83bff6' }
-                    ])
-                }
             }
         }]
+    });
+    
+    // 3. 业态类型分布
+    if (businessTypeChart) {
+        businessTypeChart.dispose();
+    }
+    businessTypeChart = echarts.init(document.getElementById('businessTypeChart'));
+    
+    const businessData = Object.entries(stats.business_types || {})
+        .filter(([_, value]) => value > 0)
+        .sort((a, b) => b[1] - a[1]);
+    
+    businessTypeChart.setOption({
+        title: {
+            text: '业态类型',
+            left: 'center',
+            textStyle: { color: '#fff' }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' }
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value',
+            axisLabel: { color: '#fff' }
+        },
+        yAxis: {
+            type: 'category',
+            data: businessData.map(d => d[0]),
+            axisLabel: { color: '#fff' }
+        },
+        series: [{
+            type: 'bar',
+            data: businessData.map(d => d[1]),
+            itemStyle: {
+                color: '#91cc75'
+            }
+        }]
+    });
+    
+    // 4. 租金模式分布
+    if (rentModeChart) {
+        rentModeChart.dispose();
+    }
+    rentModeChart = echarts.init(document.getElementById('rentModeChart'));
+    
+    // 统计租金模式
+    const rentModes = {
+        '固定租金': 0,
+        '保底+分红': 0,
+        '纯分红': 0,
+        '其他': 0
     };
     
-    regionChart.setOption(regionOption);
+    data.forEach(item => {
+        if (item['租金模式_固定']) rentModes['固定租金']++;
+        if (item['租金模式_保底分红']) rentModes['保底+分红']++;
+        if (item['租金模式_纯分红']) rentModes['纯分红']++;
+    });
     
-    // 自适应窗口大小
-    window.addEventListener('resize', function() {
-        if (operationTypeChart) operationTypeChart.resize();
-        if (regionChart) regionChart.resize();
+    const rentData = Object.entries(rentModes)
+        .filter(([_, value]) => value > 0)
+        .map(([name, value]) => ({ name, value }));
+    
+    rentModeChart.setOption({
+        title: {
+            text: '租金模式',
+            left: 'center',
+            textStyle: { color: '#fff' }
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: {c} ({d}%)'
+        },
+        legend: {
+            orient: 'vertical',
+            right: 'right',
+            textStyle: { color: '#fff' }
+        },
+        series: [{
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+                borderRadius: 10,
+                borderColor: '#fff',
+                borderWidth: 2
+            },
+            data: rentData
+        }]
+    });
+}
+
+// 更新表格
+function updateTable(data) {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = '';
+    
+    // 只显示前50条
+    const displayData = data.slice(0, 50);
+    
+    displayData.forEach((item, index) => {
+        const row = document.createElement('tr');
+        
+        // 判断运营状态
+        const status = item['开始时间'] ? '运营中' : '筹备中';
+        const statusClass = status === '运营中' ? 'active' : 'pending';
+        
+        // 获取主要业态
+        const businesses = [];
+        if (item['业态_土特产']) businesses.push('土特产');
+        if (item['业态_民宿']) businesses.push('民宿');
+        if (item['业态_研学']) businesses.push('研学');
+        if (item['业态_康养']) businesses.push('康养');
+        if (item['业态_电商']) businesses.push('电商');
+        const businessType = businesses.slice(0, 2).join('、') || '综合';
+        
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item['村庄名称'] || '--'}</td>
+            <td>${item['所属区域'] || '--'}</td>
+            <td>${businessType}</td>
+            <td>${item['书记姓名'] || '--'}</td>
+            <td>${item['联系电话'] || '--'}</td>
+            <td><span class="status-${statusClass}">${status}</span></td>
+        `;
+        
+        tableBody.appendChild(row);
     });
 }
 
 // 更新最后更新时间
 function updateLastUpdatedTime() {
     const now = new Date();
-    const timeStr = now.toLocaleString('zh-CN');
-    document.getElementById('lastUpdated').textContent = `最后更新: ${timeStr}`;
-}
-
-// 显示错误信息
-function showError(message) {
-    document.getElementById('totalVillages').textContent = '加载失败';
-    console.error(message);
-}
-
-// 刷新数据
-function refreshData() {
-    document.getElementById('refreshBtn').disabled = true;
-    document.getElementById('refreshBtn').textContent = '刷新中...';
-    
-    loadData().finally(() => {
-        setTimeout(() => {
-            document.getElementById('refreshBtn').disabled = false;
-            document.getElementById('refreshBtn').textContent = '刷新数据';
-        }, 1000);
+    const timeString = now.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
     });
+    document.getElementById('lastUpdated').textContent = `最后更新: ${timeString}`;
 }
 
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-    // 加载初始数据
-    loadData();
-    
-    // 绑定刷新按钮事件
-    document.getElementById('refreshBtn').addEventListener('click', refreshData);
-    
-    // 每5分钟自动刷新一次数据（可选）
-    setInterval(refreshData, 5 * 60 * 1000);
+// 响应窗口大小变化
+window.addEventListener('resize', function() {
+    if (mapChart) mapChart.resize();
+    if (operationTypeChart) operationTypeChart.resize();
+    if (regionChart) regionChart.resize();
+    if (businessTypeChart) businessTypeChart.resize();
+    if (rentModeChart) rentModeChart.resize();
 });
-
-// 为状态标签添加样式
-const style = document.createElement('style');
-style.textContent = `
-    .status-active {
-        color: #2ecc71;
-        font-weight: bold;
-    }
-    .status-pending {
-        color: #f39c12;
-        font-weight: bold;
-    }
-`;
-document.head.appendChild(style);
