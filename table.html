@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>详细列表 - 杭州市乡村运营数据大屏</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-icon">🏡</div>
+                <div class="header-title">
+                    <h1>杭州市乡村运营数据大屏展示系统</h1>
+                    <p class="subtitle">Rural Operation Data Dashboard</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="time-display" id="currentTime">--</div>
+                <button class="hamburger-menu" id="hamburgerMenu" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+        
+        <nav class="page-navigation" id="pageNavigation">
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">🗺️</span>
+                <span>地图展示</span>
+            </a>
+            <a href="charts.html" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span>数据统计</span>
+            </a>
+            <a href="ai_insights.html" class="nav-link">
+                <span class="nav-icon">🤖</span>
+                <span>AI 洞察</span>
+            </a>            <a href="deepseek_analysis.html" class="nav-link">
+                <span class="nav-icon">✨</span>
+                <span>深度分析</span>
+            </a>            <a href="table.html" class="nav-link active">
+                <span class="nav-icon">📋</span>
+                <span>详细列表</span>
+            </a>
+        </nav>
+        
+        <div class="page-content">
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>村庄运营详细信息</h2>
+                    <div class="card-actions">
+                        <input type="text" id="searchInput" placeholder="搜索村庄名称..." class="search-input">
+                        <button class="icon-btn">🔍</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table id="dataTable" class="data-table">
+                            <thead>
+                                <tr id="tableHeaderRow">
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

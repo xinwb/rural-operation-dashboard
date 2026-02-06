@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计 - 杭州市乡村运营数据大屏</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-icon">🏡</div>
+                <div class="header-title">
+                    <h1>杭州市乡村运营数据大屏展示系统</h1>
+                    <p class="subtitle">Rural Operation Data Dashboard</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="time-display" id="currentTime">--</div>
+                <button class="hamburger-menu" id="hamburgerMenu" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+        
+        <nav class="page-navigation" id="pageNavigation">
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">🗺️</span>
+                <span>地图展示</span>
+            </a>
+            <a href="charts.html" class="nav-link active">
+                <span class="nav-icon">📊</span>
+                <span>数据统计</span>
+            </a>
+            <a href="ai_insights.html" class="nav-link">
+                <span class="nav-icon">🤖</span>
+                <span>AI 洞察</span>
+            </a>            <a href="deepseek_analysis.html" class="nav-link">
+                <span class="nav-icon">✨</span>
+                <span>深度分析</span>
+            </a>            <a href="table.html" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span>详细列表</span>
+            </a>
+        </nav>
+        
+        <div class="page-content">
+            <div class="overview-section">
+                <div class="overview-card" data-color="blue">
+                    <div class="card-content">
+                        <h3>运营村庄总数</h3>
+                        <div class="overview-value" id="totalVillages">0</div>
+                        <div class="card-footer">Total Villages</div>
+                    </div>
+                </div>
+                <div class="overview-card" data-color="green">
+                    <div class="card-content">
+                        <h3>业态分类数量</h3>
+                        <div class="overview-value" id="operationTypes">0</div>
+                        <div class="card-footer">Business Type Categories</div>
+                    </div>
+                </div>
+                <div class="overview-card" data-color="purple">
+                    <div class="card-content">
+                        <h3>覆盖区域数量</h3>
+                        <div class="overview-value" id="regionCount">0</div>
+                        <div class="card-footer">Covered Regions</div>
+                    </div>
+                </div>
+                <div class="overview-card" data-color="orange">
+                    <div class="card-content">
+                        <h3>运营完成率</h3>
+                        <div class="overview-value" id="updateRate">--</div>
+                        <div class="card-footer">Operation Rate</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="charts-grid">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>运营业态分布</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="operationTypeChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>杭州市各区县分布</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="regionChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>运营形式分析</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="businessTypeChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+                <div class="content-card">
+                    <div class="card-header">
+                        <h2>利益分配模式</h2>
+                    </div>
+                    <div class="card-body">
+                        <div id="rentModeChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

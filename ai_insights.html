@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 洞察 - 杭州市乡村运营数据大屏</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-icon">🏡</div>
+                <div class="header-title">
+                    <h1>杭州市乡村运营数据大屏展示系统</h1>
+                    <p class="subtitle">Rural Operation Data Dashboard</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="time-display" id="currentTime">--</div>
+                <button class="hamburger-menu" id="hamburgerMenu" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <nav class="page-navigation" id="pageNavigation">
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">🗺️</span>
+                <span>地图展示</span>
+            </a>
+            <a href="charts.html" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span>数据统计</span>
+            </a>
+            <a href="ai_insights.html" class="nav-link active">
+                <span class="nav-icon">🤖</span>
+                <span>AI 洞察</span>
+            </a>
+            <a href="deepseek_analysis.html" class="nav-link">
+                <span class="nav-icon">✨</span>
+                <span>深度分析</span>
+            </a>
+            <a href="table.html" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span>详细列表</span>
+            </a>
+        </nav>
+
+        <div class="page-content ai-content">
+            <!-- 加载进度 -->
+            <div class="loading-container" id="loadingContainer">
+                <div class="loading-bar"></div>
+                <div class="loading-text">正在分析数据...</div>
+            </div>
+
+            <!-- 筛选和排序控制 -->
+            <div class="ai-controls">
+                <div class="control-group">
+                    <span style="color: var(--text-secondary); font-size: 12px;">搜索</span>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索村庄名称、区域..." />
+                </div>
+                <div class="control-group">
+                    <span style="color: var(--text-secondary); font-size: 12px;">区域</span>
+                    <select id="regionFilter" class="filter-select">
+                        <option value="">全部区域</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 快速统计 -->
+            <div class="quick-stats" id="quickStats">
+                <div class="stat-item">
+                    <span class="stat-label">总村数</span>
+                    <span class="stat-value" id="totalVillages">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">平均收入</span>
+                    <span class="stat-value" id="avgIncome">--</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">业态类型</span>
+                    <span class="stat-value" id="businessTypes">10</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">覆盖区域</span>
+                    <span class="stat-value" id="regionCount">--</span>
+                </div>
+            </div>
+
+            <!-- 村庄发展评估 -->
+            <section class="ai-section">
+                <div class="section-header">
+                    <h2>🌟 村庄发展评估</h2>
+                    <p class="section-desc">基于运营数据的智能发展评分</p>
+                </div>
+                <div class="ai-grid" id="villageAssessment">
+                    <!-- 动态生成 -->
+                </div>
+            </section>
+
+            <!-- 业态发展建议 -->
+            <section class="ai-section">
+                <div class="section-header">
+                    <h2>💡 业态发展建议</h2>
+                    <p class="section-desc">根据区域特点的智能推荐</p>
+                </div>
+                <div class="ai-grid" id="businessSuggestions">
+                    <!-- 动态生成 -->
+                </div>
+            </section>
+
+            <!-- 运营风险预警 -->
+            <section class="ai-section">
+                <div class="section-header">
+                    <h2>⚠️ 运营风险预警</h2>
+                    <p class="section-desc">潜在运营风险的智能识别</p>
+                </div>
+                <div class="ai-list" id="riskWarnings">
+                    <!-- 动态生成 -->
+                </div>
+            </section>
+
+            <!-- 对标分析 -->
+            <section class="ai-section">
+                <div class="section-header">
+                    <h2>📈 对标分析</h2>
+                    <p class="section-desc">同类村庄的对比分析</p>
+                </div>
+                <div class="ai-grid" id="benchmarkAnalysis">
+                    <!-- 动态生成 -->
+                </div>
+            </section>
+
+            <!-- 发展路径推荐 -->
+            <section class="ai-section">
+                <div class="section-header">
+                    <h2>🚀 发展路径推荐</h2>
+                    <p class="section-desc">从单一业态到多元运营的进阶建议</p>
+                </div>
+                <div class="ai-grid" id="developmentPath">
+                    <!-- 动态生成 -->
+                </div>
+            </section>
+
+            <!-- 数据洞察总结 -->
+            <section class="ai-section">
+                <div class="section-header">
+                    <h2>🔍 数据洞察总结</h2>
+                    <p class="section-desc">关键数据特征分析</p>
+                </div>
+                <div class="insights-container" id="insightsSummary">
+                    <!-- 动态生成 -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="ai_analysis.js"></script>
+</body>
+</html>

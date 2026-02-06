@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度分析报告 - 乡村运营数据大屏</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 深度分析页面核心样式 */
+        .deepseek-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .deepseek-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .analysis-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease;
+        }
+
+        .analysis-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .analysis-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .analysis-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .analysis-btn {
+            padding: 12px 28px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-analyze:active {
+            transform: translateY(0);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .deepseek-loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            z-index: 1000;
+            color: white;
+            min-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            margin-top: 20px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.5; }
+        }
+
+        /* 报告样式 */
+        .report-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.6s ease;
+            margin-bottom: 40px;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .report-header {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .report-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .report-title h2 {
+            font-size: 28px;
+            color: #333;
+            margin: 0;
+        }
+
+        .report-meta {
+            color: #999;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .report-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .report-h1 {
+            font-size: 24px;
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+            font-weight: bold;
+        }
+
+        .report-h2 {
+            font-size: 20px;
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            border-left: 3px solid #764ba2;
+            padding-left: 12px;
+            font-weight: bold;
+        }
+
+        .report-h3 {
+            font-size: 16px;
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .report-p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .report-li {
+            margin-left: 30px;
+            margin-bottom: 8px;
+            list-style: disc;
+        }
+
+        .number-highlight {
+            background: linear-gradient(120deg, #ffd89b 0%, #19547b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 20px;
+            border-radius: 8px;
+            color: #d00;
+        }
+
+        .error-message h3 {
+            margin-top: 0;
+            color: #d00;
+        }
+
+        .error-message ul {
+            margin-left: 20px;
+        }
+
+        .report-footer {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .report-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .report-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 数据预览面板 */
+        .data-preview {
+            background: #f5f7fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .data-preview h3 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .preview-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-item-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .preview-item-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .analysis-header h1 {
+                font-size: 24px;
+            }
+
+            .report-container {
+                padding: 20px;
+            }
+
+            .report-title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .report-text {
+                font-size: 14px;
+            }
+
+            .report-h1 {
+                font-size: 20px;
+            }
+
+            .report-h2 {
+                font-size: 16px;
+            }
+
+            .analysis-controls {
+                flex-direction: column;
+            }
+
+            .analysis-btn {
+                width: 100%;
+            }
+
+            .deepseek-loading {
+                min-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 顶部导航栏 -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="logo-icon">🏡</div>
+                <div class="header-title">
+                    <h1>杭州市乡村运营数据大屏展示系统</h1>
+                    <p class="subtitle">Rural Operation Data Dashboard</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="time-display" id="currentTime">--</div>
+                <button class="hamburger-menu" id="hamburgerMenu" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 页面导航 -->
+        <nav class="page-navigation" id="pageNavigation">
+            <a href="index.html" class="nav-link">
+                <span class="nav-icon">🗺️</span>
+                <span>地图展示</span>
+            </a>
+            <a href="charts.html" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span>数据统计</span>
+            </a>
+            <a href="ai_insights.html" class="nav-link">
+                <span class="nav-icon">🤖</span>
+                <span>AI 洞察</span>
+            </a>
+            <a href="deepseek_analysis.html" class="nav-link active">
+                <span class="nav-icon">✨</span>
+                <span>深度分析</span>
+            </a>
+            <a href="table.html" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span>详细列表</span>
+            </a>
+        </nav>
+
+        <div class="page-content">
+            <div class="deepseek-page">
+                <div class="deepseek-container">
+                    <!-- 页面头部 -->
+                    <div class="analysis-header">
+                        <h1>🚀 DeepSeek 深度分析平台</h1>
+                        <p>基于大语言模型的乡村运营数据专业分析</p>
+                    </div>
+
+                    <!-- 控制按钮 -->
+                    <div class="analysis-controls">
+                        <button class="analysis-btn btn-analyze" id="analyzeBtn" onclick="startDeepSeekAnalysis()">
+                            🔬 执行深度分析
+                        </button>
+                        <button class="analysis-btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" onclick="loadCachedReport()">
+                            📂 加载缓存报告
+                        </button>
+                    </div>
+
+                    <!-- 加载指示器 -->
+                    <div class="deepseek-loading" id="deepseekLoading">
+                        <div class="loading-spinner"></div>
+                        <div>正在调用 DeepSeek 进行分析...</div>
+                        <div class="loading-text">请稍候（通常需要 30-60 秒）</div>
+                    </div>
+
+                    <!-- 报告容器 -->
+                    <div class="report-container" id="deepseekReport">
+                        <div class="data-preview">
+                            <h3>📊 数据准备中...</h3>
+                            <p>点击上方"执行深度分析"按钮开始分析</p>
+                            <p style="color: #999; font-size: 14px;">分析将包括：</p>
+                            <ul style="color: #666; margin-left: 20px;">
+                                <li>整体发展态势评估</li>
+                                <li>区域差异深度分析</li>
+                                <li>业态结构优化建议</li>
+                                <li>收入提升路径规划</li>
+                                <li>风险管理防控措施</li>
+                                <li>创新发展机会识别</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本引入 -->
+    <script src="script.js"></script>
+    <script src="deepseek_analysis.js"></script>
+    <script>
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // 汉堡菜单
+        document.getElementById('hamburgerMenu')?.addEventListener('click', function() {
+            const nav = document.getElementById('pageNavigation');
+            nav.style.display = nav.style.display === 'none' ? 'flex' : 'none';
+        });
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载数据
+            try {
+                const response = await fetch('data/data.json');
+                if (response.ok) {
+                    window.allVillageData = await response.json();
+                    console.log('✓ 村庄数据已加载:', window.allVillageData.length, '个村庄');
+                } else {
+                    throw new Error('数据加载失败');
+                }
+            } catch (error) {
+                console.error('数据加载错误:', error);
+                document.getElementById('deepseekReport').innerHTML = `
+                    <div class="error-message">
+                        <h3>❌ 数据加载失败</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        // 执行深度分析
+        async function startDeepSeekAnalysis() {
+            if (!window.allVillageData || window.allVillageData.length === 0) {
+                alert('❌ 数据未加载，请刷新页面重试');
+                return;
+            }
+
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中...';
+
+            await performDeepSeekAnalysis(window.allVillageData);
+
+            btn.disabled = false;
+            btn.textContent = '🔬 执行深度分析';
+        }
+
+        // 加载缓存报告
+        function loadCachedReport() {
+            const cache = sessionStorage.getItem('deepseekAnalysis');
+            if (!cache) {
+                alert('❌ 没有缓存的报告，请先执行分析');
+                return;
+            }
+
+            try {
+                const analysis = JSON.parse(cache);
+                displayAnalysisReport(analysis);
+                console.log('✓ 已加载缓存报告');
+            } catch (error) {
+                console.error('缓存加载失败:', error);
+                alert('❌ 缓存报告损坏，请重新分析');
+            }
+        }
+
+        // 重写 displayAnalysisReport 以支持缓存
+        const originalDisplay = window.displayAnalysisReport;
+        window.displayAnalysisReport = function(analysis) {
+            // 保存到缓存
+            sessionStorage.setItem('deepseekAnalysis', JSON.stringify(analysis));
+            // 调用原始函数
+            originalDisplay(analysis);
+        };
+    </script>
+</body>
+</html>
+        /* DeepSeek 分析页面专属样式 */
+        .deepseek-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .deepseek-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .analysis-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease;
+        }
+
+        .analysis-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .analysis-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .analysis-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .analysis-btn {
+            padding: 12px 28px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-analyze:active {
+            transform: translateY(0);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .deepseek-loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            z-index: 1000;
+            color: white;
+            min-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            margin-top: 20px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49%, 100% { opacity: 1; }
+            50%, 99% { opacity: 0.5; }
+        }
+
+        /* 报告样式 */
+        .report-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.6s ease;
+            margin-bottom: 40px;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .report-header {
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .report-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .report-title h2 {
+            font-size: 28px;
+            color: #333;
+            margin: 0;
+        }
+
+        .report-meta {
+            color: #999;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .report-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .report-h1 {
+            font-size: 24px;
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+            font-weight: bold;
+        }
+
+        .report-h2 {
+            font-size: 20px;
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            border-left: 3px solid #764ba2;
+            padding-left: 12px;
+            font-weight: bold;
+        }
+
+        .report-h3 {
+            font-size: 16px;
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .report-p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .report-li {
+            margin-left: 30px;
+            margin-bottom: 8px;
+            list-style: disc;
+        }
+
+        .number-highlight {
+            background: linear-gradient(120deg, #ffd89b 0%, #19547b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 20px;
+            border-radius: 8px;
+            color: #d00;
+        }
+
+        .error-message h3 {
+            margin-top: 0;
+            color: #d00;
+        }
+
+        .error-message ul {
+            margin-left: 20px;
+        }
+
+        .report-footer {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .report-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .report-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 数据预览面板 */
+        .data-preview {
+            background: #f5f7fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .data-preview h3 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .preview-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-item-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .preview-item-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .analysis-header h1 {
+                font-size: 24px;
+            }
+
+            .report-container {
+                padding: 20px;
+            }
+
+            .report-title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .report-text {
+                font-size: 14px;
+            }
+
+            .report-h1 {
+                font-size: 20px;
+            }
+
+            .report-h2 {
+                font-size: 16px;
+            }
+
+            .analysis-controls {
+                flex-direction: column;
+            }
+
+            .analysis-btn {
+                width: 100%;
+            }
+
+            .deepseek-loading {
+                min-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="logo">🏘️ 乡村运营数据大屏</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">📍 地图展示</a></li>
+                <li><a href="charts.html" class="nav-link">📊 图表分析</a></li>
+                <li><a href="ai_insights.html" class="nav-link">🤖 AI 洞察</a></li>
+                <li><a href="deepseek_analysis.html" class="nav-link active">✨ 深度分析</a></li>
+                <li><a href="table.html" class="nav-link">📋 数据表格</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="deepseek-page">
+        <div class="deepseek-container">
+            <!-- 页面头部 -->
+            <div class="analysis-header">
+                <h1>🚀 DeepSeek 深度分析平台</h1>
+                <p>基于大语言模型的乡村运营数据专业分析</p>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="analysis-controls">
+                <button class="analysis-btn btn-analyze" id="analyzeBtn" onclick="startDeepSeekAnalysis()">
+                    🔬 执行深度分析
+                </button>
+                <button class="analysis-btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" onclick="loadCachedReport()">
+                    📂 加载缓存报告
+                </button>
+            </div>
+
+            <!-- 加载指示器 -->
+            <div class="deepseek-loading" id="deepseekLoading">
+                <div class="loading-spinner"></div>
+                <div>正在调用 DeepSeek 进行分析...</div>
+                <div class="loading-text">请稍候（通常需要 30-60 秒）</div>
+            </div>
+
+            <!-- 报告容器 -->
+            <div class="report-container" id="deepseekReport">
+                <div class="data-preview">
+                    <h3>📊 数据准备中...</h3>
+                    <p>点击上方"执行深度分析"按钮开始分析</p>
+                    <p style="color: #999; font-size: 14px;">分析将包括：</p>
+                    <ul style="color: #666; margin-left: 20px;">
+                        <li>整体发展态势评估</li>
+                        <li>区域差异深度分析</li>
+                        <li>业态结构优化建议</li>
+                        <li>收入提升路径规划</li>
+                        <li>风险管理防控措施</li>
+                        <li>创新发展机会识别</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本引入 -->
+    <script src="script.js"></script>
+    <script src="deepseek_analysis.js"></script>
+    <script>
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 加载数据
+            try {
+                const response = await fetch('data/data.json');
+                if (response.ok) {
+                    window.allVillageData = await response.json();
+                    console.log('✓ 村庄数据已加载:', window.allVillageData.length, '个村庄');
+                } else {
+                    throw new Error('数据加载失败');
+                }
+            } catch (error) {
+                console.error('数据加载错误:', error);
+                document.getElementById('deepseekReport').innerHTML = `
+                    <div class="error-message">
+                        <h3>❌ 数据加载失败</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+
+        // 执行深度分析
+        async function startDeepSeekAnalysis() {
+            if (!window.allVillageData || window.allVillageData.length === 0) {
+                alert('❌ 数据未加载，请刷新页面重试');
+                return;
+            }
+
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 分析中...';
+
+            await performDeepSeekAnalysis(window.allVillageData);
+
+            btn.disabled = false;
+            btn.textContent = '🔬 执行深度分析';
+        }
+
+        // 加载缓存报告
+        function loadCachedReport() {
+            const cache = sessionStorage.getItem('deepseekAnalysis');
+            if (!cache) {
+                alert('❌ 没有缓存的报告，请先执行分析');
+                return;
+            }
+
+            try {
+                const analysis = JSON.parse(cache);
+                displayAnalysisReport(analysis);
+                console.log('✓ 已加载缓存报告');
+            } catch (error) {
+                console.error('缓存加载失败:', error);
+                alert('❌ 缓存报告损坏，请重新分析');
+            }
+        }
+
+        // 重写 displayAnalysisReport 以支持缓存
+        const originalDisplay = window.displayAnalysisReport;
+        window.displayAnalysisReport = function(analysis) {
+            // 保存到缓存
+            sessionStorage.setItem('deepseekAnalysis', JSON.stringify(analysis));
+            // 调用原始函数
+            originalDisplay(analysis);
+        };
+    </script>
+</body>
+</html>

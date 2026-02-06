@@ -5,150 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>乡村运营数据大屏展示系统</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- 顶部导航栏 -->
         <header class="dashboard-header">
-            <h1>乡村运营行政村信息大屏展示系统</h1>
-            <div class="header-controls">
-                <button id="refreshBtn" class="control-btn">刷新数据</button>
-                <span id="lastUpdated">最后更新: --</span>
+            <div class="header-left">
+                <div class="logo-icon">🏡</div>
+                <div class="header-title">
+                    <h1>杭州市乡村运营数据大屏展示系统</h1>
+                    <p class="subtitle">Rural Operation Data Dashboard</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="time-display" id="currentTime">--</div>
+                <button class="hamburger-menu" id="hamburgerMenu" aria-label="菜单">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
             </div>
         </header>
         
-        <div class="dashboard-content">
-            <!-- 数据概览区域 -->
-            <div class="overview-section">
-                <div class="overview-card">
-                    <h3>运营村庄总数</h3>
-                    <div class="overview-value" id="totalVillages">0</div>
-                </div>
-                <div class="overview-card">
-                    <h3>运营类型分布</h3>
-                    <div class="overview-value" id="operationTypes">--</div>
-                </div>
-                <div class="overview-card">
-                    <h3>覆盖区域数量</h3>
-                    <div class="overview-value" id="regionCount">0</div>
-                </div>
-                <div class="overview-card">
-                    <h3>数据更新率</h3>
-                    <div class="overview-value" id="updateRate">--</div>
-                </div>
-            </div>
-            
-            <!-- 地图区域 -->
-            <div class="charts-section">
-                <div class="chart-container full-width">
-                    <h3>杭州市乡村运营分布地图</h3>
-                    <div id="mapChart" style="height: 600px;"></div>
-                </div>
-            </div>
-            
-            <!-- 图表区域 -->
-            <div class="charts-section">
-                <div class="chart-container">
-                    <h3>运营主体性质分布</h3>
-                    <div id="operationTypeChart" style="height: 400px;"></div>
-                </div>
-                
-                <div class="chart-container">
-                    <h3>各区域运营村庄数量</h3>
-                    <div id="regionChart" style="height: 400px;"></div>
-                </div>
-            </div>
-            
-            <div class="charts-section">
-                <div class="chart-container">
-                    <h3>业态类型分布</h3>
-                    <div id="businessTypeChart" style="height: 400px;"></div>
-                </div>
-                
-                <div class="chart-container">
-                    <h3>租金模式分布</h3>
-                    <div id="rentModeChart" style="height: 400px;"></div>
-                </div>
-            </div>
-            
-            <div class="charts-section">
-                <div class="chart-container full-width">
-                    <h3>村庄详细信息</h3>
-                    <div class="table-container">
-                        <table id="dataTable">
-                            <thead>
-                                <tr>
-                                    <th>序号</th>
-                                    <th>村庄名称</th>
-                                    <th>所属区域</th>
-                                    <th>运营类型</th>
-                                    <th>负责人</th>
-                                    <th>联系方式</th>
-                                    <th>运营状态</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                                <!-- 数据将通过JavaScript动态填充 -->
-                            </tbody>
-                        </table>
+        <!-- 页面导航 -->
+        <nav class="page-navigation" id="pageNavigation">
+            <a href="index.html" class="nav-link active">
+                <span class="nav-icon">🗺️</span>
+                <span>地图展示</span>
+            </a>
+            <a href="charts.html" class="nav-link">
+                <span class="nav-icon">📊</span>
+                <span>数据统计</span>
+            </a>
+            <a href="ai_insights.html" class="nav-link">
+                <span class="nav-icon">🤖</span>
+                <span>AI 洞察</span>
+            </a>
+            <a href="deepseek_analysis.html" class="nav-link">
+                <span class="nav-icon">✨</span>
+                <span>深度分析</span>
+            </a>
+            <a href="table.html" class="nav-link">
+                <span class="nav-icon">📋</span>
+                <span>详细列表</span>
+            </a>
+        </nav>
+        
+        <!-- 地图内容 -->
+        <div class="page-content">
+            <div class="content-card full-height">
+                    <!-- <div class="card-header">
+                        <h2>杭州市乡村运营分布地图</h2>
+                        <div class="card-actions">
+                            <button class="icon-btn" title="全屏">⛶</button>
+                        </div>
+                    </div> -->
+                    <div class="card-body" style="position: relative;">
+                        <div id="mapChart" style="width: 100%; height: 100%;"></div>
+                        
+                        <!-- 悬浮统计卡片 - 左上角 -->
+                        <div class="map-floating-stats">
+                            <div class="mini-stat-card">
+                                <div class="mini-stat-icon">🏘️</div>
+                                <div class="mini-stat-content">
+                                    <div class="mini-stat-label">运营村庄</div>
+                                    <div class="mini-stat-value" id="mapTotalVillages">0</div>
+                                </div>
+                            </div>
+                            <div class="mini-stat-card">
+                                <div class="mini-stat-icon">🎯</div>
+                                <div class="mini-stat-content">
+                                    <div class="mini-stat-label">业态分类</div>
+                                    <div class="mini-stat-value" id="mapOperationTypes">0</div>
+                                </div>
+                            </div>
+                            <div class="mini-stat-card">
+                                <div class="mini-stat-icon">📍</div>
+                                <div class="mini-stat-content">
+                                    <div class="mini-stat-label">覆盖区域</div>
+                                    <div class="mini-stat-value" id="mapRegionCount">0</div>
+                                </div>
+                            </div>
+                            <div class="mini-stat-card">
+                                <div class="mini-stat-icon">✓</div>
+                                <div class="mini-stat-content">
+                                    <div class="mini-stat-label">完成率</div>
+                                    <div class="mini-stat-value" id="mapUpdateRate">--</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 业态类型切换器 - 右下角 -->
+                        <div class="map-business-filter">
+                            <div class="filter-title">业态筛选</div>
+                            <div class="filter-options">
+                                <button class="filter-btn active" data-business="全部">全部</button>
+                                <button class="filter-btn" data-business="土特产生产销售">土特产</button>
+                                <button class="filter-btn" data-business="民宿农家乐">民宿</button>
+                                <button class="filter-btn" data-business="研学">研学</button>
+                                <button class="filter-btn" data-business="营地">营地</button>
+                                <button class="filter-btn" data-business="市集">市集</button>
+                                <button class="filter-btn" data-business="村咖">村咖</button>
+                                <button class="filter-btn" data-business="电商直播">电商</button>
+                                <button class="filter-btn" data-business="文化创意">文创</button>
+                                <button class="filter-btn" data-business="物业经济">物业</button>
+                                <button class="filter-btn" data-business="康养">康养</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
     
-    <script>
-    // 使用静态数据替代API调用
-    async function loadData() {
-        try {
-            document.getElementById('totalVillages').textContent = '加载中...';
-            
-            // 从静态文件加载数据
-            const dataResponse = await fetch('data/data.json');
-            const data = await dataResponse.json();
-            
-            const statsResponse = await fetch('data/stats.json');
-            const stats = await statsResponse.json();
-            
-            displayData(data);
-            updateStats(stats);
-            
-            updateLastUpdatedTime();
-        } catch (error) {
-            console.error('数据加载失败:', error);
-            // 使用模拟数据作为备选
-            const mockData = generateMockData();
-            displayData(mockData);
-            
-            document.getElementById('totalVillages').textContent = mockData.length;
-            document.getElementById('regionCount').textContent = 10;
-            document.getElementById('operationTypes').textContent = '文旅融合';
-            document.getElementById('updateRate').textContent = '90%';
-        }
-    }
-    
-    // 模拟数据生成函数
-    function generateMockData() {
-        const villages = [];
-        const regions = ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '金华市', '衢州市', '台州市', '丽水市'];
-        const operationTypes = ['文旅融合', '生态农业', '电商直播', '民宿经济', '康养产业', '数字乡村'];
-        
-        for (let i = 1; i <= 50; i++) {
-            villages.push({
-                id: i,
-                村庄名称: '示范村'+i,
-                所属区域: regions[Math.floor(Math.random() * regions.length)],
-                运营类型: operationTypes[Math.floor(Math.random() * operationTypes.length)],
-                负责人: '负责人'+String.fromCharCode(65 + i % 26),
-                联系方式: '138'+Math.floor(10000000 + Math.random() * 90000000),
-                运营状态: Math.random() > 0.2 ? '运营中' : '筹备中'
-            });
-        }
-        
-        return villages;
-    }
-    </script>
     <script src="script.js"></script>
 </body>
 </html>
